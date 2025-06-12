@@ -1,0 +1,13 @@
+version: "2" # 版本号 2 是当前的版本
+sql: # 数据库配置 
+  - schema: "db/migration" # schema DDL 文件
+    queries: "db/query" # 查询 DML 文件
+    engine: "postgresql" # 数据库引擎
+    gen: # 生成配置
+      go: # 生成 Go 代码
+        package: "db" # 包名
+        out: "db/sqlc" # 输出目录
+        sql_package: "database/sql" # 使用 database/sql 包
+        emit_json_tags: true # 生成 JSON 标签
+        emit_interface: true # 生成 Querier 接口
+        emit_empty_slices: true # 如果为 true，则 :many 查询返回的切片将为空而不是 nil
