@@ -37,6 +37,24 @@ jobs:
         with:
           go-version: "1.24.3"
 
+      # https://github.com/golang-migrate/migrate?tab=readme-ov-file#cli-usage
+      # https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
+      # 先下載看看他的檔名是什麼，再把它搬到 /usr/local/bin/
+      # 因為 runner 是 amd64 ，所以需要下載 linux amd64 的版本
+      # ---
+      # 把它移到 /usr/local/bin/（需要 sudo mv）有两个目的：
+      # /usr/local/bin 已在 GitHub Runner 的全局 $PATH 里，后续任何 step 直接敲 migrate … 就能找到；不用再写 ./migrate 或修改 PATH。
+      # workflow 后续 step 可能 cd 到别的目录；把可执行文件放进系统路径可避免“找不到命令”的问题。
+      # ---
+      # /usr/local/bin 和移動到 /usr/bin 的差別
+      # /usr/bin 系统发行包放置的位置，受系统软件包管理器掌控。
+      # /usr/local/bin 给使用者自己安装的额外工具预留；不被包管理器覆盖。
+      - name: Install golang-migrate
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/local/bin/migrate
+          which migrate
+
       - name: Run migrations
         run: make migrateup
 
