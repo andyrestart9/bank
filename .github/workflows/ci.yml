@@ -39,6 +39,14 @@ jobs:
         with:
           go-version: "1.24.3"
 
+      # uname 是类 Unix 系统里用来查看系统信息的命令；
+      # 常用选项：
+      # uname     → 打印内核名称 (Linux)
+      # uname -a    → 打印所有可用信息
+      # uname -m    → 打印 “machine hardware name”，也就是 CPU 架构
+      - name: Show runner arch
+        run: uname -m
+
       # https://github.com/golang-migrate/migrate?tab=readme-ov-file#cli-usage
       # https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
       # 先下載看看他的檔名是什麼，再把它搬到 /usr/local/bin/
