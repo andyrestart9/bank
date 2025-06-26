@@ -12,14 +12,16 @@ import (
 
 // createRandomAccount 會使用隨機資料呼叫 CreateAccount，並驗證資料庫回傳的 Account 欄位是否正確
 func createRandomAccount(t *testing.T) Account {
+	user := createRandomUser(t)
+
 	arg := CreateAccountParams{
-		Owner:    util.RandomOwner(),    // 隨機產生一個擁有者名稱（6 個隨機漢字）
+		Owner:    user.Username,         // 使用 createRandomUser 回傳的 user.Username
 		Balance:  util.RandomMoney(),    // 隨機產生一個金額（0～1000）
 		Currency: util.RandomCurrency(), // 隨機挑選一種貨幣（USD/EUR/CAD）
 	}
 
 	// 呼叫事先在 TestMain 裡建立好連線的 testQueries.CreateAccount，將參數 arg 插入資料庫
-	account, err := testQueries.CreateAccount(context.Background(), arg)
+	account, err := testStore.CreateAccount(context.Background(), arg)
 	// 確認不會有錯誤發生
 	require.NoError(t, err)
 	// 確認回傳的 account 結構不為空
@@ -44,10 +46,10 @@ func TestCreateAccount(t *testing.T) {
 
 // TestGetAccount 先建立一筆隨機帳戶，然後用 GetAccount 讀取並比對欄位
 func TestGetAccount(t *testing.T) {
-	account1 := createRandomAccount(t)                                         // 先插入一筆隨機帳戶
-	account2, err := testQueries.GetAccount(context.Background(), account1.ID) // 用剛剛回傳的 ID 去查
-	require.NoError(t, err)                                                    // 確認 GetAccount 不會錯
-	require.NotEmpty(t, account2)                                              // 確認讀到的資料不為空
+	account1 := createRandomAccount(t)                                       // 先插入一筆隨機帳戶
+	account2, err := testStore.GetAccount(context.Background(), account1.ID) // 用剛剛回傳的 ID 去查
+	require.NoError(t, err)                                                  // 確認 GetAccount 不會錯
+	require.NotEmpty(t, account2)                                            // 確認讀到的資料不為空
 
 	// 驗證兩次讀取的欄位都一樣
 	require.Equal(t, account1.ID, account2.ID)
@@ -67,9 +69,9 @@ func TestUpdateAccount(t *testing.T) {
 		Balance: util.RandomMoney(), // 隨機產生新的金額
 	}
 
-	account2, err := testQueries.UpdateAccount(context.Background(), arg) // 執行更新
-	require.NoError(t, err)                                               // 確認更新不會返回錯誤
-	require.NotEmpty(t, account2)                                         // 確認回傳的結構不為空
+	account2, err := testStore.UpdateAccount(context.Background(), arg) // 執行更新
+	require.NoError(t, err)                                             // 確認更新不會返回錯誤
+	require.NotEmpty(t, account2)                                       // 確認回傳的結構不為空
 
 	// ID、Owner、Currency 都不應該變，只有 Balance 被新值取代
 	require.Equal(t, account1.ID, account2.ID)             // ID 不應改變
@@ -82,12 +84,12 @@ func TestUpdateAccount(t *testing.T) {
 
 // TestDeleteAccount 先建立隨機帳戶，呼叫 DeleteAccount 再用 GetAccount 驗證該筆已不存在
 func TestDeleteAccount(t *testing.T) {
-	account1 := createRandomAccount(t)                                  // 插入一筆帳戶
-	err := testQueries.DeleteAccount(context.Background(), account1.ID) // 刪除該帳戶
-	require.NoError(t, err)                                             // 確認刪除不會有錯誤
+	account1 := createRandomAccount(t)                                // 插入一筆帳戶
+	err := testStore.DeleteAccount(context.Background(), account1.ID) // 刪除該帳戶
+	require.NoError(t, err)                                           // 確認刪除不會有錯誤
 
 	// 再次使用 GetAccount 嘗試查詢已刪除的 ID，應該得到 ErrNoRows
-	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
+	account2, err := testStore.GetAccount(context.Background(), account1.ID)
 	require.Error(t, err)                             // 確認有錯誤發生
 	require.EqualError(t, err, sql.ErrNoRows.Error()) // 錯誤必須是 "no rows in result set"
 	require.Empty(t, account2)                        // account2 結構應該是空值
@@ -95,22 +97,25 @@ func TestDeleteAccount(t *testing.T) {
 
 // TestListAccounts 建立 10 筆隨機帳戶，然後測試分頁查詢：Limit=5, Offset=5，應該拿到第 6～10 筆
 func TestListAccounts(t *testing.T) {
+	var lastAccount Account
 	// 先插入 10 筆隨機帳戶
 	for i := 0; i < 10; i++ {
-		createRandomAccount(t)
+		lastAccount = createRandomAccount(t)
 	}
 
 	arg := ListAccountsParams{
+		Owner:  lastAccount.Owner,
 		Limit:  5, // 最多取 5 筆
-		Offset: 5, // 跳過最前面 5 筆
+		Offset: 0, // 跳過最前面 5 筆
 	}
 
-	accounts, err := testQueries.ListAccounts(context.Background(), arg) // 執行分頁查詢
-	require.NoError(t, err)                                              // 確認沒有錯誤
-	require.Len(t, accounts, 5)                                          // 回傳切片長度必須是 5
+	accounts, err := testStore.ListAccounts(context.Background(), arg) // 執行分頁查詢
+	require.NoError(t, err)                                            // 確認沒有錯誤
+	require.NotEmpty(t, accounts)
 
 	// 確認每一筆都不是空結構
 	for _, account := range accounts {
 		require.NotEmpty(t, account)
+		require.Equal(t, lastAccount.Owner, account.Owner)
 	}
 }

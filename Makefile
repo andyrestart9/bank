@@ -12,8 +12,14 @@ dropdb:
 migrateup:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose up
 
-migratedown:
+migrateup1:
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose up 1
+
+migratedown:    
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose down
+
+migratedown1:
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate
@@ -21,6 +27,12 @@ sqlc:
 test:
 	go test -v -cover ./...
 
+server:
+	go run main.go
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/andyrestart9/bank/db/sqlc Store
+
 # 在 Makefile 裡，每個「目標」（target）預設都對應到檔案名稱──Make 會檢查這個檔案是否存在，以及它的修改時間，來決定需不需要執行它下面的指令（recipe）。
 # 所以我們要用 .PHONY 聲明「這些目標不是要對應檔案」，而是「純粹的命令集合」。
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock

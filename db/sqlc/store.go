@@ -7,10 +7,18 @@ import (
 )
 
 // Store provides all functions to execute database transactions
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+// SQLStore provides all functions to execute SQL queries and transactions
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
+
+var _ Store = (*SQLStore)(nil) // 確認 SQLStore 實例實現了 Store interface
 
 // NewStore 就是给外部用的“构造函数”：
 // 一次性把你的数据库连接 *sql.DB 和 sqlc 生成的 *Queries 包装到一个 Store 实例
@@ -32,7 +40,7 @@ type Store struct {
 // 这样，你就能把跨多张表、多个 CRUD 操作的业务流程，包装在同一个事务里，保证要么全成功要么全回滚，而不是把这些关键信息散落到单个 Queries 方法里去管理。
 
 // NewStore creates a new Store instance
-func NewStore(db *sql.DB) *Store {
+func NewStore(db *sql.DB) Store {
 	// 怎麼確認 *sql.DB 實例實現了 DBTX interface？
 	// 要在代码里确保无误、并让其他读代码的人也一看就懂，var _ Interface = (*Type)(nil) 就是最简洁、最惯用的做法
 	// (*sql.DB)(nil)——“把 nil 转成 *sql.DB 类型”
@@ -40,7 +48,7 @@ func NewStore(db *sql.DB) *Store {
 	var _ DBTX = (*sql.DB)(nil) // 確認 *sql.DB 實例實現了 DBTX interface
 
 	// 創建一個新的 SQLStore 實例，並返回一個 Store 實例
-	return &Store{
+	return &SQLStore{
 		db: db,
 		// func New(db DBTX) *Queries 接收一個 DBTX type 參數，因為 db 是 *sql.DB 實例， *sql.DB 實現了 DBTX interface，所以可以傳入 db 參數
 		Queries: New(db),
@@ -64,7 +72,7 @@ func NewStore(db *sql.DB) *Store {
 // 简而言之，fn func(*Queries) error 就是把“要干什么”这段代码注入到事务管理器里，让 execTx 帮你管好开关和异常处理。
 
 // execTx executes a function within a database transaction
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -118,7 +126,7 @@ type TransferTxResult struct {
 
 // TransferTx performs a money transfer from one account to the other.
 // It creates the transfer, add account entries, and update accounts' balance within a single database transaction
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {

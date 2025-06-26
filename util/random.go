@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"math/rand" // Go 標準庫的隨機數產生套件，提供 Intn、Int63n 等方法
 	"strings"   // 用於操作字串，這裡主要使用 strings.Builder 來高效拼接字串
 	"time"      // 用於取得系統時間，作為隨機數種子的來源
@@ -55,7 +56,7 @@ func RandomString(n int, zh bool) string {
 // RandomOwner generates a random owner name
 // 這裡假設「擁有者名稱」需要 6 個隨機漢字
 func RandomOwner() string {
-	return RandomString(6, true)
+	return RandomString(6, false)
 }
 
 // RandomMoney generates a random amount of money
@@ -67,7 +68,12 @@ func RandomMoney() int64 {
 // RandomCurrency generates a random currency
 // 隨機從 currencies 切片中挑一個貨幣代碼回傳
 func RandomCurrency() string {
-	currencies := []string{"USD", "EUR", "CAD"}
+	currencies := []string{USD, EUR, CAD}
 	// rng.Intn(len(currencies)) 會回傳 0,1,2 中的一個隨機索引
 	return currencies[rng.Intn(len(currencies))]
+}
+
+// RandomEmail generates a random email
+func RandomEmail() string {
+	return fmt.Sprintf("%s@email.com", RandomString(6, false))
 }
