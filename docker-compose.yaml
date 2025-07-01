@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=bank
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bank"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+
+  api:
+    build: # 這個 service 要從 golang source code 構建 image
+      context: . # 指定 build image 的 context ， . 表示當前目錄
+      dockerfile: Dockerfile # 告訴 docker-compose 要使用哪個 Dockerfile 來構建 image
+    ports:
+      - 8080:8080 # 將 container 的 8080 埠映射到主機的 8080 埠
+    environment:
+      - DB_SOURCE=postgresql://root:secret@postgres:5432/bank?sslmode=disable # 因為我們會把這個 docker-compose file 的 service 都連接到同一個 network ，所以可以用 service name 代替 IP 地址
+    depends_on:
+         postgres:
+           condition: service_healthy
+    entrypoint: ["/app/start.sh"]
+    command: ["/app/main"]
