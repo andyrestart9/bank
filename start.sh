@@ -6,6 +6,10 @@ echo "run db migration"
 
 source /app/app.env # 在 Dockerfile 我們有 COPY app.env 到 WORKDIR /app ，所以先 source 載入環境變數，跑 db migration 時才會有環境變數可用
 
+cat /app/app.env
+echo "cat /app/app.env"
+echo "DB_SOURCE: $DB_SOURCE"
+
 # /app/migrate：容器映像內的 migrate CLI 可執行檔路徑。
 # -path /app/migration：指定遷移檔 (SQL 檔) 所在資料夾。
 # -database "$DB_SOURCE"：資料庫連線字串由環境變數 DB_SOURCE 提供，維持機密與彈性。
