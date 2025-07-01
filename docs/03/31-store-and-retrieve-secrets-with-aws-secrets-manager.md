@@ -54,7 +54,7 @@ aws ecr get-login-password \
 
 pull image `docker pull <image URI>`
 
-start container `docker run <鏡像名:tag>`
+start container `docker run -p 8080:8080 <鏡像名:tag>`
 
 發生錯誤 error: failed to parse scheme from database URL: URL cannot be empty
 
