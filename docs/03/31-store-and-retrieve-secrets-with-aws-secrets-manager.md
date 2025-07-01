@@ -30,4 +30,32 @@ output:
 
 run `aws secretsmanager get-secret-value --secret-id bank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env` 測試從 secrets manager 取回 secrets ，用 jq 改成我們要的格式，再寫進 app.env ，成功後就可以放到 deploy.yml
 
-deploy.yml 不需要再寫下載 jq 和 AWS CLI ，因為 github actions 的 runner 上 Ubuntu 映像內建 AWS CLI 和 jq ，
+deploy.yml 不需要再寫下載 jq 和 AWS CLI ，因為 github actions 的 runner 上 Ubuntu 映像內建 AWS CLI 和 jq
+
+github actions 成功後到 AWS ECR 看有沒有剛剛通過 github actions build 出來的 image
+
+有的話把它載下來到本地啟動看看是不是正常
+
+要先從 AWS CLI 登入 AWS ECR 才可以下載 Private registry 的 image
+
+文件 <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
+
+run `aws ecr get-login-password` 如果有看到輸出的 password 就代表成功
+
+要與 Docker CLI 一起使用，需要把 get-login-password 命令的輸出透過管道傳輸到 docker login 命令
+
+```sh
+aws ecr get-login-password \
+    --region ap-northeast-1 \
+| docker login \
+    --username AWS \
+    --password-stdin 1495364.dkr.ecr.ap-northeast-1.amazonaws.com  
+```
+
+pull image `docker pull <image URI>`
+
+start container `docker run <鏡像名:tag>`
+
+發生錯誤 error: failed to parse scheme from database URL: URL cannot be empty
+
+因為我們在 start.sh 沒有先從 app.env load 環境變數，所以要在 start.sh 先 `source app.env` load 完環境變數再跑 db migration
