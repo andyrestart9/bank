@@ -32,11 +32,13 @@ run `aws secretsmanager get-secret-value --secret-id bank --query SecretString -
 
 deploy.yml 不需要再寫下載 jq 和 AWS CLI ，因為 github actions 的 runner 上 Ubuntu 映像內建 AWS CLI 和 jq
 
+然後要在 AWS IAM 做一隻有 Secrets Manager 讀權限的角色，在 github actions 中先換角色、再執行 aws secretsmanager 指令
+
 github actions 成功後到 AWS ECR 看有沒有剛剛通過 github actions build 出來的 image
 
 有的話把它載下來到本地啟動看看是不是正常
 
-要先從 AWS CLI 登入 AWS ECR 才可以下載 Private registry 的 image
+要先從  AWS CLI 登入 AWS ECR 才可以下載 Private registry 的 image
 
 文件 <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
 
