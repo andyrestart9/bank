@@ -9,10 +9,13 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     permissions:
-      id-token: write    # 取得 OIDC token 給 AWS
-      contents: read     # 讀取 repo 內容（推映像時常用）
+      id-token: write # 取得 OIDC token 給 AWS
+      contents: read # 讀取 repo 內容（推映像時常用）
 
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
