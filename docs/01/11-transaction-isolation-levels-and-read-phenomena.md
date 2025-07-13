@@ -132,7 +132,7 @@ PostgreSQL's Read Uncommitted mode behaves like Read Committed. This is because 
 
     |Tx A |                         Tx B|
     |---------------------------  | ------------------------------|
-    SELECT COUNT(*) FROM orders WHERE customer_id = 42;  -- 得 5 筆||
+    |SELECT COUNT(*) FROM orders WHERE customer_id = 42;  -- 得 5 筆||
     ||INSERT INTO orders ... (customer_id=42);<br/>COMMIT;|
     |SELECT COUNT(*) FROM orders WHERE customer_id = 42;  -- 變成 6 筆（多了一個 phantom）||
 
