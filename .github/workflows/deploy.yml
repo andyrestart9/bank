@@ -51,6 +51,12 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
 
+      - name: Configure AWS credentials for EKS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::149536480497:role/github-actions-ecr-push
+          aws-region: ap-northeast-1
+
       - name: Update kube config
         run: |
           aws eks update-kubeconfig --name bank --region ap-northeast-1
