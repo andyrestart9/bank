@@ -41,6 +41,15 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/andyrestart9/bank/db/sqlc Store
 
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+	proto/*.proto
+
+evans:
+	evans --host localhost --port 9090 -r repl
+
 # 在 Makefile 裡，每個「目標」（target）預設都對應到檔案名稱──Make 會檢查這個檔案是否存在，以及它的修改時間，來決定需不需要執行它下面的指令（recipe）。
 # 所以我們要用 .PHONY 聲明「這些目標不是要對應檔案」，而是「純粹的命令集合」。
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test server mock
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test server mock proto evans
